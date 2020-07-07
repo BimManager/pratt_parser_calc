@@ -11,7 +11,7 @@ BINDIR := bin
 SRCEXT := c
 
 HDRS := calc.h
-SRCS := $(addprefix $(SRCDIR)/, calc.c main.c)
+SRCS := $(addprefix $(SRCDIR)/, calc.c utils.c main.c)
 OBJS := $(patsubst $(SRCDIR)/%.$(SRCEXT), $(OBJDIR)/%.o, $(SRCS))
 NAME := calc
 

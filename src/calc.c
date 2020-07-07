@@ -5,42 +5,28 @@
 static char		g_tokens[128] =
 {
   ['+'] = PLUS, ['-'] = MINUS, ['*'] = MULT,
-  ['/'] = DIV, ['('] = LPAREN, [')'] = RPAREN
+  ['/'] = DIV, ['('] = LPAREN, [')'] = RPAREN,
+  ['^'] = POW, ['%'] = MOD
 };
 
-static t_token	g_token;
-
-void	ft_token_init(const char *expr)
-{
-  g_token.type = END;
-  g_token.value = 0;
-  g_token.expr = expr;
-}
-
-void	ft_error(const char *fmt, ...)
-{
-  va_list	ap;
-
-  va_start(ap, fmt);
-  vfprintf(stderr, fmt, ap);
-  exit(1);
-}
+t_token			g_token;
 
 void	ft_next(void)
 {
-  int	nb;
-  char	c;
-  
+  double	nb;
+  char		c;
+
+  printf("## next\n");
   while ((c = *g_token.expr))
   {
     if (isdigit(c))
     {
-      nb = 0;
-      while (isdigit(*g_token.expr))
-        nb = 10 * nb + *g_token.expr++ - '0';
+      nb = atof(g_token.expr);
+      while ('.' == *g_token.expr
+             || isdigit(*g_token.expr))
+        ++g_token.expr;
       g_token.type = NUMBER;
       g_token.value = nb;
-      printf("nb: %d\n", g_token.value);
       return ;
     }
     else if (isspace(c))
@@ -52,15 +38,13 @@ void	ft_next(void)
     else
     {
       g_token.type = g_tokens[(int)c];
-      printf("token: %x\n", g_token.type);
       ++g_token.expr;
       if (!g_token.type)
-        ft_error("An unexpected token\n");
+        ft_error("'%c' is an unexpected token.\n", c);
       return ;
     }
   }
   g_token.type = END;
-  printf("end\n");
 }
 
 double	ft_expr(int rbp)
@@ -68,7 +52,7 @@ double	ft_expr(int rbp)
   double	left;
 
   left = ft_nud();
-  printf("## expr: left: %f\n", left);
+  printf("## expr\n");
   while (rbp < ft_bp())
     left = ft_led(left);
   return (left);
@@ -80,11 +64,10 @@ double	ft_nud(void)
   t_token_type	type;
 
   type = g_token.type;
-  printf("## nud: %x\n", type);
+  printf("## nud\n");
   if (NUMBER == type)
   {
     v = g_token.value;
-    printf("v: %f\n", v);
     ft_next();
     return (v);
   }
@@ -112,7 +95,7 @@ double	ft_led(double left)
   t_token_type	type;
 
   type = g_token.type;
-  printf("## led: %x\n", type);
+  printf("## led\n");
   if (PLUS == type)
   {
     ft_next();
@@ -133,6 +116,16 @@ double	ft_led(double left)
     ft_next();
     return (left / ft_expr(20));
   }
+  else if (POW == type)
+  {
+    ft_next();
+    return (pow(left, ft_expr(40 - 1)));
+  }
+  else if (MOD == type)
+  {
+    ft_next();
+    return (fmod(left, ft_expr(20)));
+  }
   else
     ft_error("Expected operator\n");
   return (-1);
@@ -143,16 +136,18 @@ int		ft_bp(void)
   t_token_type	type;
 
   type = g_token.type;
-  printf("bp: type: %x\n", type);
+  printf("## bp\n");
   if (PLUS == type || MINUS == type)
     return (10);
-  else if (DIV == type || MULT == type)
+  else if (DIV == type || MULT == type || MOD == type)
     return (20);
-  else if (RPAREN == type)
+  else if (POW == type)
+    return (40);
+  else if (RPAREN == type || END == type)
     return (0);
-  else if (END == type)
-    return (0);
+  else if (NUMBER == type)
+    ft_error("An operator is expected\n");
   else
-    ft_error("%x Unexpected token\n", type);
+    ft_error("An unexpected token\n");
   return (-1);
 }
