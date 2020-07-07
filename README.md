@@ -1,1 +1,1 @@
-# pratt_parser_calc
+A calculator implemented in C using a Pratt parser
